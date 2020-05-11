@@ -1,59 +1,105 @@
-name: 0.0.$(Build.BuildId)
+# Azure DevOps pipeline for automating certificate management with Azure and 
+# Let’s Encrypt.
+#
+# To enable the deployment in any environment you need to configure the following 
+# global variable otherwise all the jobs will be skipped:
+# - DO_RENEW_CERT = true
+# The following parameter needs to be set to identify the environment for which
+# should be ordered or renewed a certificate via ACME:
+# - ENVIRONMENT: TEST | PRODUCTION
+#
+# The following pipeline variables have to be added and configured based on the
+# environment:
+# - PRODUCTION_AZURE_SUBSCRIPTION: service connection name
+# - PRODUCTION_AcmeContact: email which should be notified before cert expire
+# - PRODUCTION_AcmeDirectory: LE_STAGE | LE_PROD
+# - PRODUCTION_CertificateNames: comma-separated list of domain names 
+# - PRODUCTION_KeyVaultResourceId: resource ID of the key vault 
+# - PRODUCTION_StorageContainerSASToken: SAS token for the storage container
+#
+# - TEST_AZURE_SUBSCRIPTION: service connection name for test only
+# - TEST_AcmeContact: email which should be notified before cert expire
+# - TEST_AcmeDirectory: LE_STAGE | LE_PROD
+# - TEST_CertificateNames: comma-separated list of domain names 
+# - TEST_KeyVaultResourceId: resource ID of the key vault 
+# - TEST_StorageContainerSASToken: SAS token for the storage container  
+
+parameters:
+  - name: 'ENVIRONMENT'
+    displayName: 'Select the environment for which renew the certificate:'
+    type: string
+    default: TEST
+    values:
+      - TEST  
+      - PRODUCTION
+
+variables:
+  - name: RENEW_CERT_ENV
+    value: ${{ parameters.ENVIRONMENT }}
 
 # Linux based agent; all except the first step will also work on Windows
-queue:
-  name: Hosted Ubuntu 1604
+pool:
+  vmImage: 'ubuntu-latest'
 
 # The scheduled trigger will be set in the Azure DevOps portal
 trigger: none
 
-steps:
+jobs:
+  - job: renew_cert_test
+    condition: 
+      and(
+        succeeded(),
+        and(
+          eq(variables['DO_RENEW_CERT'], true),
+          eq(variables['RENEW_CERT_ENV'], 'TEST')
+        )
+      )
+    steps:
+      # 1. Set the number of the build
+      - task: PowerShell@2
+        displayName: Update Build Number
+        inputs:
+          targetType: 'inline'
+          script: '$id = "$(Build.BuildId)"; $date = Get-Date -Format "yyyy.MMdd"; Write-Host "##vso[build.updatebuildnumber]$date.$id"'
+        
+      # 2. Install AzCopy v10 (min version required: build agents run an older version)
+      - task: Bash@3
+        displayName: "Install AzCopy v10"
+        inputs:
+          targetType: 'inline'
+          script: 'wget https://azcopyvnext.azureedge.net/release20200501/azcopy_linux_amd64_10.4.3.tar.gz && tar xvzf ./azcopy_linux_amd64_10.4.3.tar.gz && rm ./azcopy_linux_amd64_10.4.3.tar.gz && cp ./azcopy_linux_amd64_10.4.3/azcopy ./ && rm -rf ./azcopy_linux_amd64_10.4.3 && ./azcopy --version'
 
-# Set the number of the build
-- task: PowerShell@2
-  displayName: Update Build Number
-  inputs:
-    targetType: 'inline'
-    script: '$id = "$(Build.BuildId)"; $date = Get-Date -Format "yyyy.MMdd"; Write-Host "##vso[build.updatebuildnumber]$date.$id"'
-  
-# Install AzCopy v10
-- task: Bash@3
-  displayName: "Install AzCopy v10"
-  inputs:
-    targetType: 'inline'
-    script: 'wget https://azcopyvnext.azureedge.net/release20190301/azcopy_linux_amd64_10.0.8.tar.gz && tar xvzf ./azcopy_linux_amd64_10.0.8.tar.gz && rm ./azcopy_linux_amd64_10.0.8.tar.gz && cp ./azcopy_linux_amd64_10.0.8/azcopy ./ && rm -rf ./azcopy_linux_amd64_10.0.8 && ./azcopy --version'
+      # 3. Install the Az PowerShell modules our script will need
+      - task: PowerShell@2
+        displayName: Install PowerShell Modules (Az.Accounts, Az.KeyVault, Az.Resources, Posh-ACME)
+        inputs:
+          targetType: 'inline'
+          script: 'Install-Module Az.Accounts, Az.KeyVault, Az.Resources, Posh-ACME -Force'
+          errorActionPreference: 'stop'
+          failOnStderr: true
+          pwsh: true
 
-# Install the Az PowerShell modules our script will need
-- task: PowerShell@2
-  displayName: Install PowerShell Modules (Az.Accounts, Az.KeyVault, Az.Resources, Posh-ACME)
-  inputs:
-    targetType: 'inline'
-    script: 'Install-Module Az.Accounts, Az.KeyVault, Az.Resources, Posh-ACME -Force'
-    errorActionPreference: 'stop'
-    failOnStderr: true
-    pwsh: true
+      # 4. Order or renew a certificate via ACME
+      - task: AzurePowerShell@4
+        displayName: Order or Renew Certificate
+        inputs:
+          azureSubscription: '$(TEST_AZURE_SUBSCRIPTION)'
+          scriptType: 'FilePath'
+          scriptPath: 'New-AcmeCertificate.ps1 '
+          scriptArguments: '-AcmeDirectory "$(TEST_AcmeDirectory)" -AcmeContact "$(TEST_AcmeContact)" -CertificateNames "$(TEST_CertificateNames)" -StorageContainerSASToken "$(TEST_StorageContainerSASToken)"'
+          errorActionPreference: 'stop'
+          failOnStandardError: true
+          azurePowerShellVersion: 'LatestVersion'
 
-# Order or renew a certificate via ACME
-- task: AzurePowerShell@4
-  displayName: Order or Renew Certificate
-  inputs:
-    azureSubscription: 'ACME Certificate Automation'
-    scriptType: 'FilePath'
-    scriptPath: 'New-AcmeCertificate.ps1 '
-    scriptArguments: '-AcmeDirectory "$(AcmeDirectory)" -AcmeContact "$(AcmeContact)" -CertificateNames "$(CertificateNames)" -StorageContainerSASToken "$(StorageContainerSASToken)"'
-    errorActionPreference: 'stop'
-    failOnStandardError: true
-    azurePowerShellVersion: 'LatestVersion'
-
-# Import the certificate into Azure Key Vault
-- task: AzurePowerShell@4
-  displayName: Import Certificate into Key Vault
-  inputs:
-    azureSubscription: 'ACME Certificate Automation'
-    scriptType: 'FilePath'
-    scriptPath: 'Import-AcmeCertificateToKeyVault.ps1 '
-    scriptArguments: '-CertificateNames "$(CertificateNames)" -KeyVaultResourceId "$(KeyVaultResourceId)"'
-    errorActionPreference: 'stop'
-    failOnStandardError: true
-    azurePowerShellVersion: 'LatestVersion'
-  condition: "and(succeeded(), ne(variables['KeyVaultResourceId'], ''))"
+      # 5. Import the certificate into Azure Key Vault
+      - task: AzurePowerShell@4
+        displayName: Import Certificate into Key Vault
+        inputs:
+          azureSubscription: '$(TEST_AZURE_SUBSCRIPTION)'
+          scriptType: 'FilePath'
+          scriptPath: 'Import-AcmeCertificateToKeyVault.ps1 '
+          scriptArguments: '-CertificateNames "$(TEST_CertificateNames)" -KeyVaultResourceId "$(TEST_KeyVaultResourceId)"'
+          errorActionPreference: 'stop'
+          failOnStandardError: true
+          azurePowerShellVersion: 'LatestVersion'
+        condition: "and(succeeded(), ne(variables['TEST_KeyVaultResourceId'], ''))"
