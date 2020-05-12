@@ -1,8 +1,8 @@
 # Azure DevOps pipeline for automating certificate management with Azure and 
 # Let’s Encrypt.
 #
-# To enable the deployment in any environment you need to configure the following 
-# global variable otherwise all the jobs will be skipped:
+# To enable the certificate management in any environment you need to add and set
+# this global variable otherwise the pipeline job will be skipped:
 # - DO_RENEW_CERT = true
 # The following parameter needs to be set to identify the environment for which
 # should be ordered or renewed a certificate via ACME:
@@ -45,15 +45,8 @@ pool:
 trigger: none
 
 jobs:
-  - job: renew_cert_test
-    condition: 
-      and(
-        succeeded(),
-        and(
-          eq(variables['DO_RENEW_CERT'], true),
-          eq(variables['RENEW_CERT_ENV'], 'TEST')
-        )
-      )
+  - job: certificate_management 
+    condition: and(succeeded(), eq(variables['DO_RENEW_CERT'], true))
     steps:
       # 1. Set the number of the build
       - task: PowerShell@2
@@ -61,7 +54,7 @@ jobs:
         inputs:
           targetType: 'inline'
           script: '$id = "$(Build.BuildId)"; $date = Get-Date -Format "yyyy.MMdd"; Write-Host "##vso[build.updatebuildnumber]$date.$id"'
-        
+
       # 2. Install AzCopy v10 (min version required: build agents run an older version)
       - task: Bash@3
         displayName: "Install AzCopy v10"
@@ -79,9 +72,45 @@ jobs:
           failOnStderr: true
           pwsh: true
 
-      # 4. Order or renew a certificate via ACME
+
+      # 4.1 Order or renew a certificate via ACME in PRODUCTION env
       - task: AzurePowerShell@4
-        displayName: Order or Renew Certificate
+        displayName: 'PROD - Order or Renew Certificate'
+        condition: and(succeeded(), eq(variables['RENEW_CERT_ENV'], 'PRODUCTION'))
+        inputs:
+          azureSubscription: '$(PRODUCTION_AZURE_SUBSCRIPTION)'
+          scriptType: 'FilePath'
+          scriptPath: 'New-AcmeCertificate.ps1 '
+          scriptArguments: '-AcmeDirectory "$(PRODUCTION_AcmeDirectory)" -AcmeContact "$(PRODUCTION_AcmeContact)" -CertificateNames "$(PRODUCTION_CertificateNames)" -StorageContainerSASToken "$(PRODUCTION_StorageContainerSASToken)"'
+          errorActionPreference: 'stop'
+          failOnStandardError: true
+          azurePowerShellVersion: 'LatestVersion'
+
+      # 4.2 Import the certificate into Azure Key Vault in PRODUCTION env
+      - task: AzurePowerShell@4
+        displayName: 'PROD - Import Certificate into Key Vault'
+        condition:
+          and(
+            succeeded(),
+            and(
+              ne(variables['PRODUCTION_KeyVaultResourceId'], ''),
+              eq(variables['RENEW_CERT_ENV'], 'PRODUCTION')
+            )
+          )
+        inputs:
+          azureSubscription: '$(PRODUCTION_AZURE_SUBSCRIPTION)'
+          scriptType: 'FilePath'
+          scriptPath: 'Import-AcmeCertificateToKeyVault.ps1 '
+          scriptArguments: '-CertificateNames "$(PRODUCTION_CertificateNames)" -KeyVaultResourceId "$(PRODUCTION_KeyVaultResourceId)"'
+          errorActionPreference: 'stop'
+          failOnStandardError: true
+          azurePowerShellVersion: 'LatestVersion'
+
+
+      # 5.1 Order or renew a certificate via ACME in TEST env
+      - task: AzurePowerShell@4
+        displayName: 'TEST - Order or Renew Certificate'
+        condition: and(succeeded(), eq(variables['RENEW_CERT_ENV'], 'TEST'))
         inputs:
           azureSubscription: '$(TEST_AZURE_SUBSCRIPTION)'
           scriptType: 'FilePath'
@@ -91,9 +120,17 @@ jobs:
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
 
-      # 5. Import the certificate into Azure Key Vault
+      # 5.2 Import the certificate into Azure Key Vault in TEST env
       - task: AzurePowerShell@4
-        displayName: Import Certificate into Key Vault
+        displayName: 'TEST - Import Certificate into Key Vault'
+        condition:
+          and(
+            succeeded(),
+            and(
+              ne(variables['TEST_KeyVaultResourceId'], ''),
+              eq(variables['RENEW_CERT_ENV'], 'TEST')
+            )
+          )
         inputs:
           azureSubscription: '$(TEST_AZURE_SUBSCRIPTION)'
           scriptType: 'FilePath'
@@ -102,4 +139,3 @@ jobs:
           errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
-        condition: "and(succeeded(), ne(variables['TEST_KeyVaultResourceId'], ''))"
