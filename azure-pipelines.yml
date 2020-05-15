@@ -4,6 +4,9 @@
 # To enable the certificate management in any environment you need to add and set
 # this global variable otherwise the pipeline job will be skipped:
 # - DO_RENEW_CERT = true
+# To force the certificate to be renewed regardless the suggested renewal window 
+# this parameter must be set:
+# - FORCE = true
 # The following parameter needs to be set to identify the environment for which
 # should be ordered or renewed a certificate via ACME:
 # - ENVIRONMENT: TEST | PRODUCTION
@@ -22,7 +25,7 @@
 # - TEST_AcmeDirectory: LE_STAGE | LE_PROD
 # - TEST_CertificateNames: comma-separated list of domain names 
 # - TEST_KeyVaultResourceId: resource ID of the key vault 
-# - TEST_StorageContainerSASToken: SAS token for the storage container  
+# - TEST_StorageContainerSASToken: SAS token for the storage container
 
 parameters:
   - name: 'ENVIRONMENT'
@@ -32,6 +35,14 @@ parameters:
     values:
       - TEST  
       - PRODUCTION
+
+  - name: 'FORCE'
+    displayName: 'force certificate to be renewed'
+    type: boolean
+    default: False
+    values:
+      - False  
+      - True
 
 variables:
   - name: RENEW_CERT_ENV
@@ -81,7 +92,7 @@ jobs:
           azureSubscription: '$(PRODUCTION_AZURE_SUBSCRIPTION)'
           scriptType: 'FilePath'
           scriptPath: 'New-AcmeCertificate.ps1 '
-          scriptArguments: '-AcmeDirectory "$(PRODUCTION_AcmeDirectory)" -AcmeContact "$(PRODUCTION_AcmeContact)" -CertificateNames "$(PRODUCTION_CertificateNames)" -StorageContainerSASToken "$(PRODUCTION_StorageContainerSASToken)"'
+          scriptArguments: '-AcmeDirectory "$(PRODUCTION_AcmeDirectory)" -AcmeContact "$(PRODUCTION_AcmeContact)" -CertificateNames "$(PRODUCTION_CertificateNames)" -StorageContainerSASToken "$(PRODUCTION_StorageContainerSASToken)" -ForceRenewal "${{ parameters.FORCE }}"'
           errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
@@ -115,7 +126,7 @@ jobs:
           azureSubscription: '$(TEST_AZURE_SUBSCRIPTION)'
           scriptType: 'FilePath'
           scriptPath: 'New-AcmeCertificate.ps1 '
-          scriptArguments: '-AcmeDirectory "$(TEST_AcmeDirectory)" -AcmeContact "$(TEST_AcmeContact)" -CertificateNames "$(TEST_CertificateNames)" -StorageContainerSASToken "$(TEST_StorageContainerSASToken)"'
+          scriptArguments: '-AcmeDirectory "$(TEST_AcmeDirectory)" -AcmeContact "$(TEST_AcmeContact)" -CertificateNames "$(TEST_CertificateNames)" -StorageContainerSASToken "$(TEST_StorageContainerSASToken)" -ForceRenewal "${{ parameters.FORCE }}"'
           errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
