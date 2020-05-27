@@ -32,7 +32,12 @@ $azureAccessToken = $currentAzureProfileClient.AcquireAccessToken($azureContext.
 
 # Set Posh-ACME working directory
 $env:POSHACME_HOME = $workingDirectory
-Import-Module Posh-ACME -Force
+# NOTE. The Posh-ACME module is not imported using Import-Module because for 
+# security reason we prefer to store the NuGet package to an internal repository. 
+# So, it is assumed that the module has been installed from a .nupkg file 
+# manually downloaded from the PowerShell Gallery, unzipped and copied in a  
+# directory added to the $env:PSModulePath variable before running this script. 
+## Import-Module Posh-ACME -Force
 
 # Configure Posh-ACME server and retrieve the server name
 Set-PAServer -DirectoryUrl $AcmeDirectory
