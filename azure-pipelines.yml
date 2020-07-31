@@ -1,13 +1,13 @@
-# Azure DevOps pipeline for automating certificate management with Azure and 
-# Let’s Encrypt. This automation is based on Posh-ACME, an ACME v2 client 
-# implemented as a PowerShell module that enables you to generate publicly 
-# trusted SSL/TLS certificates from an ACME capable certificate authority 
+# Azure DevOps pipeline for automating certificate management with Azure and
+# Let’s Encrypt. This automation is based on Posh-ACME, an ACME v2 client
+# implemented as a PowerShell module that enables you to generate publicly
+# trusted SSL/TLS certificates from an ACME capable certificate authority
 # such as Let's Encrypt.
 #
 # To enable the certificate management in any environment you need to add and set
 # this global variable otherwise the pipeline job will be skipped:
 # - DO_RENEW_CERT = true
-# To force the certificate to be renewed regardless the suggested renewal window 
+# To force the certificate to be renewed regardless the suggested renewal window
 # this parameter must be set:
 # - FORCE = true
 # The following parameter needs to be set to identify the environment for which
@@ -19,28 +19,28 @@
 # - PRODUCTION_AZURE_SUBSCRIPTION: service connection name
 # - PRODUCTION_AcmeContact: email which should be notified before cert expire
 # - PRODUCTION_AcmeDirectory: LE_STAGE | LE_PROD
-# - PRODUCTION_CertificateNames: comma-separated list of domain names 
-# - PRODUCTION_KeyVaultResourceId: resource ID of the key vault 
+# - PRODUCTION_CertificateNames: comma-separated list of domain names
+# - PRODUCTION_KeyVaultResourceId: resource ID of the key vault
 #
 # - TEST_AZURE_SUBSCRIPTION: service connection name for test only
 # - TEST_AcmeContact: email which should be notified before cert expire
 # - TEST_AcmeDirectory: LE_STAGE | LE_PROD
-# - TEST_CertificateNames: comma-separated list of domain names 
+# - TEST_CertificateNames: comma-separated list of domain names
 # - TEST_KeyVaultResourceId: resource ID of the key vault
 #
-# NOTE. The latest release version of Posh-ACME can be found in the PowerShell 
+# NOTE. The latest release version of Posh-ACME can be found in the PowerShell
 # Gallery at https://www.powershellgallery.com/packages/Posh-ACME.
-# The remote installation from the gallery is easiest using Install-Module from 
-# the PowerShellGet module but, for security reasons, we prefer to store 
-# the NuGet package to an internal repository. 
+# The remote installation from the gallery is easiest using Install-Module from
+# the PowerShellGet module but, for security reasons, we prefer to store
+# the NuGet package to an internal repository.
 
 parameters:
   - name: 'ENVIRONMENT'
     displayName: 'Select the environment for which renew the certificate:'
     type: string
-    default: TEST
+    default: PRODUCTION
     values:
-      - TEST  
+      - TEST
       - PRODUCTION
 
   - name: 'FORCE'
@@ -48,7 +48,7 @@ parameters:
     type: boolean
     default: False
     values:
-      - False  
+      - False
       - True
 
 variables:
@@ -63,7 +63,7 @@ pool:
 trigger: none
 
 jobs:
-  - job: certificate_management 
+  - job: certificate_management
     condition: and(succeeded(), eq(variables['DO_RENEW_CERT'], true))
     steps:
       # 1. Set the number of the build
