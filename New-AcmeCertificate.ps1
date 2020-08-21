@@ -4,7 +4,8 @@ param (
     [string] $AcmeContact,
     [string] $CertificateNames,
     [string] $KeyVaultResourceId,
-    [string] $ForceRenewal
+    [string] $ForceRenewal,
+    [string] $OCSPMustStaple
 )
 
 # Supress progress messages. Azure DevOps doesn't format them correctly (used by New-PACertificate)
