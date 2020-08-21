@@ -115,11 +115,20 @@ $paPluginArgs = @{
     AZSubscriptionId = $azureContext.Subscription.Id
     AZAccessToken    = $azureAccessToken;
 }
+## TODO OCSPMustStaple is used only when requesting certs for TEST env
 if ($ForceRenewal -eq "true") {
-    New-PACertificate -Domain $CertificateNamesArr -DnsPlugin Azure -PluginArgs $paPluginArgs -Force
+    if ($OCSPMustStaple -eq "true") {
+        New-PACertificate -Domain $CertificateNamesArr -DnsPlugin Azure -PluginArgs $paPluginArgs -Force -OCSPMustStaple
+    } else {
+        New-PACertificate -Domain $CertificateNamesArr -DnsPlugin Azure -PluginArgs $paPluginArgs -Force
+    }
 }
 else {
-    New-PACertificate -Domain $CertificateNamesArr -DnsPlugin Azure -PluginArgs $paPluginArgs
+    if ($OCSPMustStaple -eq "true") {
+        New-PACertificate -Domain $CertificateNamesArr -DnsPlugin Azure -PluginArgs $paPluginArgs -OCSPMustStaple
+    } else {
+        New-PACertificate -Domain $CertificateNamesArr -DnsPlugin Azure -PluginArgs $paPluginArgs
+    }
 }
 
 ## C) Update LE metadata in key vault's secrets (if data is changed)

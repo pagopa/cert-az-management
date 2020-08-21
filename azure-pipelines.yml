@@ -142,7 +142,7 @@ jobs:
           azureSubscription: '$(TEST_AZURE_SUBSCRIPTION)'
           scriptType: 'FilePath'
           scriptPath: 'New-AcmeCertificate.ps1 '
-          scriptArguments: '-AcmeDirectory "$(TEST_AcmeDirectory)" -AcmeContact "$(TEST_AcmeContact)" -CertificateNames "$(TEST_CertificateNames)" -KeyVaultResourceId "$(TEST_KeyVaultResourceId)" -ForceRenewal "${{ parameters.FORCE }}"'
+          scriptArguments: '-AcmeDirectory "$(TEST_AcmeDirectory)" -AcmeContact "$(TEST_AcmeContact)" -CertificateNames "$(TEST_CertificateNames)" -KeyVaultResourceId "$(TEST_KeyVaultResourceId)" -ForceRenewal "${{ parameters.FORCE }}" -OCSPMustStaple True'
           errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
