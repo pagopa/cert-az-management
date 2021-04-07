@@ -57,7 +57,7 @@ variables:
 
 # Linux based agent; all except the first step will also work on Windows
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'ubuntu-18.04'
 
 # The scheduled trigger will be set in the Azure DevOps portal
 trigger: none
