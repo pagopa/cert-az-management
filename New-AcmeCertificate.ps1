@@ -88,8 +88,6 @@ $currentAccountName = (Get-PAAccount).id
 $orderDirectoryPath = Join-Path -Path $workingDirectory -ChildPath $currentServerName | Join-Path -ChildPath $currentAccountName | Join-Path -ChildPath $certificateName
 $orderJsonPath = Join-Path -Path $orderDirectoryPath -ChildPath "order.json"
 
-echo "Get the current certificate order file content from key vault"
-
 # Get the current certificate order file content from key vault (if any):
 # the secret name is "acme-le-stage-<certName>-order-json" | "acme-le-prod-<certName>-order-json"
 $azureKeyVaultOrderName = $azureKeyVaultSecretPrefix + "-" + $certificateName.Replace(".", "-").Replace("!", "wildcard") + "-order-json"
@@ -110,8 +108,6 @@ if ($isNewAccount -eq $false) {
         }
     }
 }
-
-echo "Request certificate from LE server using ACME client"
 
 ## B) Request certificate from LE server using ACME client
 
