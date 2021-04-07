@@ -50,7 +50,6 @@ $keyVaultResource = Get-AzResource -ResourceId $KeyVaultResourceId
 $azureKeyVaultAccountName = $azureKeyVaultSecretPrefix + "-" + "acct-json"
 
 # If we have an available ACME account in key vault, copy it to local acct.json file
-Import-Module Az.KeyVault
 $azureKeyVaultSecretAcc = (Get-AzKeyVaultSecret -Name $azureKeyVaultAccountName -VaultName $keyVaultResource.Name) #-ErrorAction SilentlyContinue
 if ($azureKeyVaultSecretAcc) {
     $accountDataFromKv = [PSCredential]::new("user",($azureKeyVaultSecretAcc).SecretValue).GetNetworkCredential().Password

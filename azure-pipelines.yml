@@ -78,7 +78,7 @@ jobs:
         displayName: Install Az Modules
         inputs:
           targetType: 'inline'
-          script: 'Install-Module Az.Accounts, Az.KeyVault, Az.Resources -Force'
+          script: 'Install-Module Az.Accounts, Az.KeyVault, Az.Resources -Force -Scope CurrentUser'
           errorActionPreference: 'stop'
           failOnStderr: true
           pwsh: true
