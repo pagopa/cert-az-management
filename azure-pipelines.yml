@@ -57,7 +57,7 @@ variables:
 
 # Linux based agent; all except the first step will also work on Windows
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
 
 # The scheduled trigger will be set in the Azure DevOps portal
 trigger: none
@@ -78,7 +78,7 @@ jobs:
         displayName: Install Az Modules
         inputs:
           targetType: 'inline'
-          script: 'Install-Module Az.Accounts, Az.KeyVault, Az.Resources -Force -Scope CurrentUser'
+          script: 'Install-Module Az.Accounts, Az.KeyVault, Az.Resources -Force'
           errorActionPreference: 'stop'
           failOnStderr: true
           pwsh: true
