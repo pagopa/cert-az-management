@@ -97,7 +97,7 @@ jobs:
       #     failOnStderr: true
       #     pwsh: true
 
-      # 4.1 Order or renew a certificate via ACME in PRODUCTION env
+      # 3.1 Order or renew a certificate via ACME in PRODUCTION env
       - task: AzurePowerShell@4
         displayName: 'PROD - Order or Renew Certificate'
         condition: and(succeeded(), eq(variables['RENEW_CERT_ENV'], 'PRODUCTION'))
@@ -109,10 +109,8 @@ jobs:
           errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
-        #env:
-        #  PSModulePath: $(PSModulePath)
 
-      # 4.2 Import the certificate into Azure Key Vault in PRODUCTION env
+      # 3.2 Import the certificate into Azure Key Vault in PRODUCTION env
       - task: AzurePowerShell@4
         displayName: 'PROD - Import Certificate into Key Vault'
         condition:
@@ -131,10 +129,8 @@ jobs:
           errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
-        #env:
-        #  PSModulePath: $(PSModulePath)
 
-      # 5.1 Order or renew a certificate via ACME in TEST env
+      # 4.1 Order or renew a certificate via ACME in TEST env
       - task: AzurePowerShell@4
         displayName: 'TEST - Order or Renew Certificate'
         condition: and(succeeded(), eq(variables['RENEW_CERT_ENV'], 'TEST'))
@@ -146,10 +142,8 @@ jobs:
           errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
-        #env:
-        #  PSModulePath: $(PSModulePath)
 
-      # 5.2 Import the certificate into Azure Key Vault in TEST env
+      # 4.2 Import the certificate into Azure Key Vault in TEST env
       - task: AzurePowerShell@4
         displayName: 'TEST - Import Certificate into Key Vault'
         condition:
@@ -168,5 +162,3 @@ jobs:
           errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
-        #env:
-        #  PSModulePath: $(PSModulePath)
