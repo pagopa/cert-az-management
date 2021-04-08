@@ -78,24 +78,24 @@ jobs:
         displayName: Install Az Modules
         inputs:
           targetType: 'inline'
-          script: 'Install-Module Az.Accounts, Az.Resources -Force'
+          script: 'Install-Module Az.Accounts, Az.KeyVault, Az.Resources, Posh-ACME -Force'
           errorActionPreference: 'stop'
           failOnStderr: true
           pwsh: true
 
-      # 3. Install Posh-ACME PowerShell module from a local NuGet package
-      - task: PowerShell@2
-        displayName: Install Posh-ACME Module
-        inputs:
-          targetType: 'inline'
-          script: |
-            Expand-Archive -LiteralPath (Resolve-Path "./Packages/*.nupkg" | Select -ExpandProperty Path) -DestinationPath ./pwsh_modules/Posh-ACME
-            $env:PSModulePath += ":./pwsh_modules"
-            echo "##vso[task.setvariable variable=PSModulePath]$env:PSModulePath"
-            Get-Module -ListAvailable -Verbose Posh-ACME
-          errorActionPreference: 'stop'
-          failOnStderr: true
-          pwsh: true
+      # # 3. Install Posh-ACME PowerShell module from a local NuGet package
+      # - task: PowerShell@2
+      #   displayName: Install Posh-ACME Module
+      #   inputs:
+      #     targetType: 'inline'
+      #     script: |
+      #       Expand-Archive -LiteralPath (Resolve-Path "./Packages/*.nupkg" | Select -ExpandProperty Path) -DestinationPath ./pwsh_modules/Posh-ACME
+      #       $env:PSModulePath += ":./pwsh_modules"
+      #       echo "##vso[task.setvariable variable=PSModulePath]$env:PSModulePath"
+      #       Get-Module -ListAvailable -Verbose Posh-ACME
+      #     errorActionPreference: 'stop'
+      #     failOnStderr: true
+      #     pwsh: true
 
       # 4.1 Order or renew a certificate via ACME in PRODUCTION env
       - task: AzurePowerShell@4
@@ -109,8 +109,8 @@ jobs:
           errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
-        env:
-          PSModulePath: $(PSModulePath)
+        #env:
+        #  PSModulePath: $(PSModulePath)
 
       # 4.2 Import the certificate into Azure Key Vault in PRODUCTION env
       - task: AzurePowerShell@4
@@ -131,8 +131,8 @@ jobs:
           errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
-        env:
-          PSModulePath: $(PSModulePath)
+        #env:
+        #  PSModulePath: $(PSModulePath)
 
       # 5.1 Order or renew a certificate via ACME in TEST env
       - task: AzurePowerShell@4
@@ -146,8 +146,8 @@ jobs:
           errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
-        env:
-          PSModulePath: $(PSModulePath)
+        #env:
+        #  PSModulePath: $(PSModulePath)
 
       # 5.2 Import the certificate into Azure Key Vault in TEST env
       - task: AzurePowerShell@4
@@ -168,5 +168,5 @@ jobs:
           errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
-        env:
-          PSModulePath: $(PSModulePath)
+        #env:
+        #  PSModulePath: $(PSModulePath)
