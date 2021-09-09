@@ -51,12 +51,14 @@ $azureKeyVaultAccountName = $azureKeyVaultSecretPrefix + "-" + "acct-json"
 
 # If we have an available ACME account in key vault, copy it to local acct.json file
 $azureKeyVaultSecretAcc = (Get-AzKeyVaultSecret -Name $azureKeyVaultAccountName -VaultName $keyVaultResource.Name) #-ErrorAction SilentlyContinue
+
 if ($azureKeyVaultSecretAcc) {
     $accountDataFromKv = [PSCredential]::new("user",($azureKeyVaultSecretAcc).SecretValue).GetNetworkCredential().Password
     $accountNameFromKv = (ConvertFrom-Json –InputObject $accountDataFromKv).id
 
     # Determine paths to acct.json file (e.g. <serverName>/<accountName>/acct.json)
-    $accountDirectoryPath = Join-Path -Path $workingDirectory -ChildPath $currentServerName | Join-Path -ChildPath $accountNameFromKv
+    #$accountDirectoryPath = Join-Path -Path $workingDirectory -ChildPath $currentServerName | Join-Path -ChildPath $accountNameFromKv
+    $accountDirectoryPath = Join-Path -Path $workingDirectory -ChildPath $AcmeDirectory | Join-Path -ChildPath $accountNameFromKv
     $accountJsonPath = Join-Path -Path $accountDirectoryPath -ChildPath "acct.json"
 
     # Create the acct.json file and directories
@@ -69,6 +71,7 @@ if ($azureKeyVaultSecretAcc) {
 
 # Configure Posh-ACME account
 $account = Get-PAAccount
+
 if (-not $account) {
     # New account
     $account = New-PAAccount -Contact $AcmeContact -AcceptTOS
@@ -79,8 +82,11 @@ elseif ($account.contact -ne "mailto:$AcmeContact") {
     Set-PAAccount -ID $account.id -Contact $AcmeContact
 }
 
+
+
 # Re-determine paths to acct.json file (e.g. <serverName>/<accountName>/acct.json)
-$accountDirectoryPath = Join-Path -Path $workingDirectory -ChildPath $currentServerName | Join-Path -ChildPath $account.id
+# $accountDirectoryPath = Join-Path -Path $workingDirectory -ChildPath $currentServerName | Join-Path -ChildPath $account.id
+$accountDirectoryPath = Join-Path -Path $workingDirectory -ChildPath $AcmeDirectory | Join-Path -ChildPath $account.id
 $accountJsonPath = Join-Path -Path $accountDirectoryPath -ChildPath "acct.json"
 
 # Determine paths to order.json file (e.g. <serverName>/<accountName>/<certName>/order.json)
@@ -91,6 +97,7 @@ $orderJsonPath = Join-Path -Path $orderDirectoryPath -ChildPath "order.json"
 # Get the current certificate order file content from key vault (if any):
 # the secret name is "acme-le-stage-<certName>-order-json" | "acme-le-prod-<certName>-order-json"
 $azureKeyVaultOrderName = $azureKeyVaultSecretPrefix + "-" + $certificateName.Replace(".", "-").Replace("!", "wildcard") + "-order-json"
+
 if ($isNewAccount -eq $false) {
     # If we have an available order in key vault, copy it to local order.json file
     # only if that certificate order was generated with current ACME account;

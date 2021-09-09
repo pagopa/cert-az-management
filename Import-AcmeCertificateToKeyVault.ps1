@@ -1,6 +1,7 @@
 param (
     [string] $CertificateNames,
-    [string] $KeyVaultResourceId
+    [string] $KeyVaultResourceId,
+    [string] $AcmeDirectory
 )
 
 # Split certificate names by comma or semi-colon
@@ -21,7 +22,8 @@ $currentServerName = ((Get-PAServer).location) -split "/" | Where-Object -Filter
 $currentAccountName = (Get-PAAccount).id
 
 # Determine paths to resources
-$orderDirectoryPath = Join-Path -Path $workingDirectory -ChildPath $currentServerName | Join-Path -ChildPath $currentAccountName | Join-Path -ChildPath $certificateName
+#$orderDirectoryPath = Join-Path -Path $workingDirectory -ChildPath $currentServerName | Join-Path -ChildPath $currentAccountName | Join-Path -ChildPath $certificateName
+$orderDirectoryPath = Join-Path -Path $workingDirectory -ChildPath $AcmeDirectory | Join-Path -ChildPath $currentAccountName | Join-Path -ChildPath $certificateName
 $orderDataPath = Join-Path -Path $orderDirectoryPath -ChildPath "order.json"
 $pfxFilePath = Join-Path -Path $orderDirectoryPath -ChildPath "fullchain.pfx"
 
@@ -30,12 +32,15 @@ if ((Test-Path -Path $orderDirectoryPath) -and (Test-Path -Path $orderDataPath) 
 
     $pfxPass = (Get-PAOrder $certificateName).PfxPass
 
+
     # Load order data
     $orderData = Get-Content -Path $orderDataPath -Raw | ConvertFrom-Json
 
-    # Load PFX
-    $certificate = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList $pfxFilePath, $pfxPass, 'EphemeralKeySet'
+    $pfxFilePathFull = Resolve-Path -Path $pfxFilePath
 
+    # Load PFX
+    $certificate = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList $pfxFilePathFull , $pfxPass, 'EphemeralKeySet'
+    
     # Get the current certificate from key vault (if any)
     $azureKeyVaultCertificateName = $certificateName.Replace(".", "-").Replace("!", "wildcard")
     $keyVaultResource = Get-AzResource -ResourceId $KeyVaultResourceId

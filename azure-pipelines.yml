@@ -125,7 +125,7 @@ jobs:
           azureSubscription: '$(PRODUCTION_AZURE_SUBSCRIPTION)'
           scriptType: 'FilePath'
           scriptPath: 'Import-AcmeCertificateToKeyVault.ps1 '
-          scriptArguments: '-CertificateNames "$(PRODUCTION_CertificateNames)" -KeyVaultResourceId "$(PRODUCTION_KeyVaultResourceId)"'
+          scriptArguments: '-AcmeDirectory "$(PRODUCTION_AcmeDirectory)" -CertificateNames "$(PRODUCTION_CertificateNames)" -KeyVaultResourceId "$(PRODUCTION_KeyVaultResourceId)"'
           errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
