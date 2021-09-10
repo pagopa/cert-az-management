@@ -64,6 +64,8 @@ if ($azureKeyVaultSecretAcc) {
     New-Item -ItemType Directory -Force $accountDirectoryPath
     Out-File -FilePath $accountJsonPath -InputObject $accountDataFromKv
 
+    echo "Account Name FromKv $accountNameFromKv"
+
     # Update account with data in the file
     Set-PAAccount -ID $accountNameFromKv
 }
