@@ -78,7 +78,15 @@ jobs:
         displayName: Install Az Modules
         inputs:
           targetType: 'inline'
-          script: 'Install-Module Az.Accounts, Az.KeyVault, Az.Resources, Posh-ACME -Force'
+          script: 'Install-Module Az.Accounts, Az.KeyVault, Az.Resources, -Force'
+          errorActionPreference: 'stop'
+          failOnStderr: true
+          pwsh: true
+      - task: PowerShell@2
+        displayName: Install Posh Acme module
+        inputs:
+          targetType: 'inline'
+          script: 'Install-Module  Posh-ACME -RequiredVersion 4.6.0 -Force'
           errorActionPreference: 'stop'
           failOnStderr: true
           pwsh: true

@@ -33,8 +33,10 @@ if ((Test-Path -Path $orderDirectoryPath) -and (Test-Path -Path $orderDataPath) 
     # Load order data
     $orderData = Get-Content -Path $orderDataPath -Raw | ConvertFrom-Json
 
+    $pfxFilePathFull = Resolve-Path -Path $pfxFilePath
+
     # Load PFX
-    $certificate = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList $pfxFilePath, $pfxPass, 'EphemeralKeySet'
+    $certificate = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList $pfxFilePathFull, $pfxPass, 'EphemeralKeySet'
 
     # Get the current certificate from key vault (if any)
     $azureKeyVaultCertificateName = $certificateName.Replace(".", "-").Replace("!", "wildcard")
