@@ -51,6 +51,7 @@ $azureKeyVaultAccountName = $azureKeyVaultSecretPrefix + "-" + "acct-json"
 
 # If we have an available ACME account in key vault, copy it to local acct.json file
 $azureKeyVaultSecretAcc = (Get-AzKeyVaultSecret -Name $azureKeyVaultAccountName -VaultName $keyVaultResource.Name) #-ErrorAction SilentlyContinue
+echo "azure Key Vault SecretAcc $azureKeyVaultSecretAcc"
 if ($azureKeyVaultSecretAcc) {
     $accountDataFromKv = [PSCredential]::new("user",($azureKeyVaultSecretAcc).SecretValue).GetNetworkCredential().Password
     $accountNameFromKv = (ConvertFrom-Json –InputObject $accountDataFromKv).id
