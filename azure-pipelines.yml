@@ -114,7 +114,7 @@ jobs:
           scriptType: 'FilePath'
           scriptPath: 'New-AcmeCertificate.ps1 '
           scriptArguments: '-AcmeDirectory "$(PRODUCTION_AcmeDirectory)" -AcmeContact "$(PRODUCTION_AcmeContact)" -CertificateNames "$(PRODUCTION_CertificateNames)" -KeyVaultResourceId "$(PRODUCTION_KeyVaultResourceId)" -ForceRenewal "${{ parameters.FORCE }}"'
-          #errorActionPreference: 'stop'
+          errorActionPreference: 'stop'
           failOnStandardError: true
           azurePowerShellVersion: 'LatestVersion'
 

@@ -66,8 +66,11 @@ if ($azureKeyVaultSecretAcc) {
 
     echo "Account Name FromKv $accountNameFromKv"
 
-    # Update account with data in the file
-    Set-PAAccount -ID $accountNameFromKv
+    if ($accountNameFromKv) {
+        # Update account with data in the file
+        Set-PAAccount -ID $accountNameFromKv
+    }
+
 }
 
 # Configure Posh-ACME account
